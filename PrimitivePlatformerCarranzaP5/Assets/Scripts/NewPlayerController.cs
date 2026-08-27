@@ -12,6 +12,7 @@ public class NewPlayerController : MonoBehaviour
     public Vector3 cameraOffset = new Vector3(0, 5, -10);
 
     private Rigidbody rb;
+    private bool isGrounded = true;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -33,11 +34,25 @@ public class NewPlayerController : MonoBehaviour
         // Move the object based on time and speed
         transform.Translate(movement * moveSpeed * Time.deltaTime, Space.World);
 
-        // Jump when Spacebar is pressed
-        if (Input.GetKeyDown(KeyCode.Space) && rb != null)
+        // Jump when Spacebar is pressed and the player is grounded
+        if (Input.GetKeyDown(KeyCode.Space) && rb != null && isGrounded)
         {
             // Adding upward force to make the object jump
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            isGrounded = false; // Prevent jumping again until touching the ground
+        }
+        // Restart position if player falls off map
+        if (transform.position.y < -7f)
+        {
+            transform.position = new Vector3(1f, -0.25f, 1f);
+
+            // If the object has a rigidbody, reset its velocity so it stops falling
+            Rigidbody rb = GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
         }
     }
 
@@ -48,5 +63,12 @@ public class NewPlayerController : MonoBehaviour
         {
             Camera.main.transform.position = transform.position + cameraOffset;
         }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        // Reset the grounded state when colliding with an object (assumed to be the ground)
+        // You can also add `&& collision.gameObject.CompareTag("Ground")` if you set up Tags
+        isGrounded = true;
     }
 }
